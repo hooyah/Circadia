@@ -1,7 +1,8 @@
 
 ABOUT THE CIRCADIA SUNRISE LAMP PROJECT
 ---------------------------------------
-
+General info
+https://sites.google.com/site/fpgaandco/sunrise
 
 
 
