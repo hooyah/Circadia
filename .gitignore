@@ -1,0 +1,9 @@
+/*.pyc
+/sound
+/MSR_os/*.pyc
+/ManilaUtils/*.pyc
+/themedit/*.pyc
+*.pyc
+/.idea
+/circadia_cfg.json
+/themedit/editor_cfg.json

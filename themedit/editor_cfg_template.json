@@ -1,0 +1,16 @@
+{
+
+  "info" : "Circadia Theme Editor config file",
+
+  "posterWidth" : 1000,
+  "posterHeight" : 150,
+  "posterFont" : "verdanab.ttf",
+
+  "themeRootPath" : "G:/Projects/code/manilaSunrise/themes",
+  "startupTheme" : "sunrise",
+
+  "color_background" : "#444444",
+  "color_highlightBackground" : "#444444",
+
+  "emulator_cmd": "python G:/Projects/code/manilaSunrise/manila/manila_alarm.py {themeName}"
+}

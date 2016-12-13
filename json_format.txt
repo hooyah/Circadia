@@ -1,0 +1,94 @@
+// A description of the theme format
+
+{
+	//======= general parameters
+
+	"name" : "Manila Sunrise",       // name of the theme
+    "poster": "boracay_beaches.jpg", // image file used as banner
+    "posterCrop": [  				 // the crop region used for the banner
+        0, 240,	   // X,Y
+        1023, 392  // W,H
+    ],
+	"LUT": "default", 				// a theme can select a custom LUT
+
+	//======= graphics modules
+	"graphics" : [
+		{
+			// gradient module
+			"mod" : "gradient", 	// the module class: Gradient draws a gradient
+			"name": "Background", 	// the module's name, an arbitrary string
+			"params" : 				// a dictionary of module specific parameters
+				{
+					"keys" : [ 		// the gradient can vary over time from t=0 to t=1
+					  {				// keys are in time,value pairs
+ 						  "time" : 0.0,
+						  "grad" : [ [0.0,  [0.0, 0.0 ,0.0] ], // a gradient description
+						 		     [0.33, [1.0, 0.0, 0.0] ],
+								     [0.66, [0.0, 1.0, 0.0] ],
+								     [1.0,  [0.0, 0.0, 1.0] ]
+								   ]
+					   }
+				 	]
+				},
+			"envelope" : 			// the entire effect of the module can be modulated with this envelope
+				{	"type" : "lin",	// the type can be "lin" for linear or "log" for logarithmic
+					"keys" :
+						[	{"time":0.0, "val":1.0},  // keys are in time, value pairs
+							{"time":1.0, "val":1.0}
+						]
+				}
+		},
+		{
+			// image shift module
+            "mod": "imgShift",
+            "name": "drive",
+            "params":
+				{
+					"file": "core_gradient.jpg",	// the image file to load
+					"offset": [						// starting offset
+						0.0, 	// X offset
+						-20.0 	// Y offset
+					],
+					"oversampling": 4,	// oversampling amount (careful, will use more memory)
+					"speed": [			// shift speed
+						0.0, 	// X speed
+						-82.5	// Y speed
+					]
+				},
+			"envelope" : 			// the entire effect of the module can be modulated with this envelope
+				{	"type" : "lin",	// the type can be "lin" for linear or "log" for logarithmic
+					"keys" :
+						[	{"time":0.0, "val":1.0},  // keys are in time, value pairs
+							{"time":1.0, "val":1.0}
+						]
+				}
+		}
+	],
+
+	//== sound modules
+	"sounds" : [
+		{
+			"mod" : "wav", 			// Wav module, plays wavs
+            "name": "bubbling1", 	// the module's name, an arbitrary string
+			"params":
+				{	"file" : "bubbling1.wav",	// filename
+					"mode" : "loop",			// "loop", "once", "xfade"
+                    "maxLevel" : 0.6,			// maximum volume level, global volume multiplier actually, not a clamp
+                    "repeatEvery" : {"min" : 1.0, "max" : 3.0 } 	// determines how frequent the sound plays back, only relevant in loop mode
+					"randGain": [	// in loop mode, each repeat can play back with a randomized volume level
+						0.25, // minimum volume gain (percentage of maxlevel)
+						1.0   // maximum
+					],
+                	"xfade": 1.0	// in xfade mode, the duration of the fade in seconds
+				},
+			"envelope": // the entire effect of the module can be modulated with this envelope
+				{	"type" : "log",
+					"keys" :
+						[	{"time":0.0, "val":0.0},
+							{"time":0.5, "val":1.0},
+							{"time":1.0, "val":1.0}
+						]
+				}
+		}
+	]
+}

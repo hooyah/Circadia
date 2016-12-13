@@ -1,0 +1,28 @@
+{
+
+  "info" : "Circadia config file",
+
+  "autoThemes": [
+    "arctic",
+    "sumatra_rain",
+    "summer",
+    "sunrise"
+  ],
+
+
+  "platform_cfg" : {
+
+    "win32" : {
+      "themebasepath" : "G:\\Projects\\code\\manilaSunrise\\themes\\",
+      "screen_width": 16,
+      "screen_height": 18
+    },
+
+    "raspi" : {
+      "themebasepath": "/home/pi/themes/",
+      "screen_width": 16,
+      "screen_height": 18
+    }
+  }
+
+}
