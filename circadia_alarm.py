@@ -33,7 +33,7 @@ but_right = 4
 # current behaviour: any button click will bring up the menu
 # left button will enable/disable the alarm
 # right button will run the current theme in demo mode (sped up to 2 minutes)
-# holding any button while in the main menu will start rotating the display
+# holding any button while in the main menu will start rotating the display (pov display only)
 # 5 seconds of inactivity will exit the menu
 
 def __handle_menu():
@@ -160,7 +160,7 @@ def main(themeName=None):
     alarm_currentTheme = None
 
     print 'running on', MSR.sys_hw.platform()
-    p,n = os.path.split(__file__)
+    p,n = os.path.split(os.path.abspath(__file__))
     cfg_path = p+os.sep+'circadia_cfg.json'
     config = MSR.loadConfig(cfg_path)
     prefs = dict()

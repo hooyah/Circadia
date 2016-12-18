@@ -24,6 +24,12 @@ class CircadiaVisualizer(tk.Frame):
         self.backgroundLabel = tk.Label(master, image=self.lampImg, background='#252525')
         self.backgroundLabel.pack(side='left', anchor='sw', fill='y')
 
+    def get_screenWidth(self):
+        return 16
+
+    def get_screenHeight(self):
+        return 18
+
 
     def updateScreen(self, canvas):
         """ update the image with a new canvas"""

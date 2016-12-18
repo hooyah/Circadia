@@ -13,7 +13,7 @@
   "platform_cfg" : {
 
     "win32" : {
-      "themebasepath" : "G:\\Projects\\code\\manilaSunrise\\themes\\",
+      "themebasepath" : "G:\\Projects\\code\\circadia\\themes\\",
       "screen_width": 16,
       "screen_height": 18
     },
@@ -21,7 +21,8 @@
     "raspi" : {
       "themebasepath": "/home/pi/themes/",
       "screen_width": 16,
-      "screen_height": 18
+      "screen_height": 18,
+      "serial": "/dev/ttyAMA0"
     }
   }
 

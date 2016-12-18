@@ -9,8 +9,9 @@
 import os
 
 __platform = "win32"
-if "MANILA_SUNRISE_PLATFORM" in os.environ: # on the lamp this env variable will exist
-    __platform = os.environ["raspi"]
+if "MANILA_SUNRISE_PLATFORM" in os.environ \
+or "CIRCADIA_PLATFORM" in os.environ: # on the lamp this env variable will exist
+    __platform = "raspi"
 
 
 if __platform == 'win32':

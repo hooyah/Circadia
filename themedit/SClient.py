@@ -28,6 +28,9 @@ class CircadiaSocketClient:
         self.starttime = 0
         self.success = 0
 
+        self.canvasW = 16
+        self.canvasH = 18
+
         self.sounds = dict()
         pygame.mixer.pre_init(frequency=41000)
         pygame.init()
@@ -87,6 +90,12 @@ class CircadiaSocketClient:
 
         if self.worker[2] == "ok":
             self.success += 1
+        elif self.worker[2][:3] == "cfg":
+            tok = self.worker[2].split(':')
+            self.canvasW = int(tok[1])
+            self.canvasH = int(tok[2])
+            self.success += 1
+            print 'received dim', self.canvasW, self.canvasH
         else:
             self.success = 0
             print self.worker[2]

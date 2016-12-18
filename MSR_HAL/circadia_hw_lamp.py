@@ -17,21 +17,23 @@ import MSR_OS.floatCanvas as fc
 
 # neopixels
 # LED strip configuration:
-LED_COUNT      = 16*18   # Number of LED pixels.
+LED_COUNT      = 5       # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (must support PWM!).
 LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
-LED_DMA        = 6       # DMA channel to use for generating signal (try 5)
+LED_DMA        = 5       # DMA channel to use for generating signal (try 5)
 LED_BRIGHTNESS = 255     # Set to 0 for darkest and 255 for brightest
-LED_INVERT     = True    # True to invert the signal (when using NPN transistor level shift)
+LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 
 # GPIO, audio relay
 GPIO_RELAY = 23
 
 _strip = None
-_display = povserial.pov()
+_display = None
 _activeLUT = None
 _defaultLUTs = {'off': None, 'default': None}
 
+_screenW = 16
+_screenH = 18
 
 def platform():
     """
@@ -50,11 +52,15 @@ def init(system, config):
 
     # update system settings
 
+    global _screenW
+    global _screenH
     cfg = config['platform_cfg']['raspi']
     system["theme_path"] = cfg['themebasepath']
-    system["screen_width"] = 16  #cfg['screen_width'] # this is specific to this hardware anyway
-    system["screen_height"] = 18  #cfg['screen_height']
+    _screenW = system["screen_width"] = cfg['screen_width'] # this is specific to this hardware anyway
+    _screenH = system["screen_height"] = cfg['screen_height']
 
+    global _display
+    _display = povserial.pov(cfg)
 
     # setup gpios
     gpio.setmode(gpio.BCM)
@@ -71,6 +77,7 @@ def init(system, config):
     pygame.init()
     pygame.mixer.set_num_channels(16)
 
+
     if 'forceDisplayWindow' in system:  # for debugging
         pygame.display.set_mode((160, 180))
 
@@ -79,10 +86,13 @@ def init(system, config):
     _display.clear()
 
     __init_lut(system)
-    system['canvas'] = fc.Canvas(w=16, h=18)
+    system['canvas'] = fc.Canvas(w=_screenW, h=_screenH)
 
     print 'sys lamp: init done.'
 
+
+def getScreenDimensions():
+    return ( _screenW, _screenH )
 
 
 def __init_lut(system):
@@ -177,13 +187,13 @@ def update_screen(surface):
     global _activeLUT
     ps = surface.toPygameSurface(_activeLUT)
     global _strip
-    for x in xrange(16):
-        for y in xrange(18):
+    for x in xrange(_screenW):
+        for y in xrange(_screenH):
             col = ps.get_at((x,y))
             if x%2==0:
-                ind = 17-y + x*18
+                ind = _screenH-y-1 + x*_screenH
             else:
-                ind = y + x*18
+                ind = y + x*_screenH
             #_strip.setPixelColorRGB(ind, col[0],col[1],col[2] )
             _strip.setPixelColorRGB(ind, col[1], col[0], col[2] ) # green&red are swapped for some reason in this version of rpi_ws281x
     _strip.show()

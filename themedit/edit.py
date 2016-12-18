@@ -542,17 +542,24 @@ class Application(tk.Frame):
 
         self.time = val
         self.timeline.coords(self.cursor, self.time * 800, 0, self.time * 800, 30)
+        vis_w = self.previewFrame.get_screenWidth()
+        vis_h = self.previewFrame.get_screenHeight()
 
-        fc = floatCanvas.Canvas(16, 18) # todo: <-- from cfg
+        fc = floatCanvas.Canvas(vis_w, vis_h)
         for m in self.modules:
             m.setTime(val)
             if m.moduleCategory() == 'graphics':
                 m.updateCanvas(fc)
 
-        if self.lampClient.isConnected():
-            self.lampClient.sendCanvas(fc.data)
-
         self.previewFrame.updateScreen(fc)
+
+        if self.lampClient.isConnected():
+            fc = floatCanvas.Canvas(self.lampClient.canvasW, self.lampClient.canvasH)
+            for m in self.modules:
+                if m.moduleCategory() == 'graphics':
+                    m.updateCanvas(fc)
+            self.lampClient.sendCanvas(fc.data)
+            print 'send canvas',fc.width,fc.height
 
         val *= self.duration
         self.statusBar.config(text='%dm%02ds'%(int(val/60),int(val%60)))

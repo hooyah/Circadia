@@ -66,7 +66,6 @@ class ModGradient(Module_base):
 
         self.updateEnvKeys()
         trgDict.append( self.params )
-        # todo: migrate files into target folder
 
 
     def supportsModKeys(self):
@@ -107,7 +106,8 @@ class ModGradient(Module_base):
         if self.lampClient and self.lampClient.isConnected():
 
             grad = Gradient3(params)
-            prm = [ grad.eval(float(i) / 17) for i in xrange(18) ]
+            h = self.lampClient.canvasH
+            prm = [ grad.eval(float(i) / (h-1)) for i in xrange(h) ]
             self.lampClient.sendGradient(prm)
 
 

@@ -46,6 +46,10 @@ def init(system, config):
     print 'sys windows: init done.'
 
 
+def getScreenDimensions():
+    bg = pygame.display.get_surface()
+    return ( int(bg.get_width()), int(bg.get_height()) )
+
 
 def switchLut(lutName):
     """

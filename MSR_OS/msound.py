@@ -96,6 +96,7 @@ class wav_module(modbase.SModule):
             # noting is playing yet
             if not self.clipTimes[0]:
                 self.pg_channels[0] = self.pg_sound.play()
+               
                 if self.pg_channels[0] == None:
                     self.dbg_sound('xfadeA')
                 else:

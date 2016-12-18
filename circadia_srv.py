@@ -7,10 +7,12 @@ for remote control from the editor
 import socket
 import json
 from MSR_HAL import circadiahw
+from MSR_OS import engine
 
 sys_hw = circadiahw.CircadiaHw
 system = dict()
-sys_hw.init(system)
+config = engine.loadConfig('circadia_cfg.json')
+sys_hw.init(system, config)
 sys_hw.audio_off()
 sys_hw.switchClock(False, False) # switch to display
 sys_hw.textOut('listening on port 9942', center=True)
@@ -19,6 +21,8 @@ sys_hw._display.start_scroll()
 print "switching lut to 'default'"
 sys_hw.switchLut('default')
 
+screenW = system['screen_width']
+screenH = system['screen_height']
 
 print 'running on', sys_hw.platform()
 print 'listening on port 9942'
@@ -43,7 +47,8 @@ try:
                 print 'received: ', len(buffer)
 
                 if buffer.startswith('hello'):
-                    connection.send('ok')
+                    #connection.send('ok')
+                    connection.send("cfg:%d:%d"%(screenW, screenH))
                     connection.close()
                     break
 
@@ -63,16 +68,17 @@ try:
                     connection.close()
                     try:
                         grd = json.loads(buffer[5:])
-                        if len(grd) == 18:
+                        if len(grd) == screenH:
 
                             canvas = system['canvas']
                             for i,c in enumerate(grd):
                                 canvas.drawLineH(i, c[0], c[1], c[2])
                             sys_hw.update_screen(canvas)
+                            print 'draw'
                         else:
-                            print 'corrupt packet'
+                            print 'incorrect gradient size', len(grd), 'expected', screenH
                     except:
-                        pass
+                        print 'exception: grad'
 
                     break
                 elif buffer.startswith('cnv:'):
@@ -80,16 +86,16 @@ try:
                     connection.close()
                     try:
                         grd = json.loads(buffer[4:])
-                        if len(grd) == 18*16*3:
+                        if len(grd) == screenW*screenH*3:
 
                             canvas = system['canvas']
                             canvas.data = grd
                             sys_hw.update_screen(canvas)
                         else:
-                            print 'corrupt packet size', len(grd)
+                            print 'incorrect canvas size', len(grd)
                             print grd
                     except:
-                        pass
+                        print 'exception: canvas'
 
                     break
 
