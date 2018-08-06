@@ -119,7 +119,7 @@ class Application(tk.Frame):
         """ load settings from config file """
 
         self.cfg = dict()
-        p,n = os.path.split(__file__)
+        p,n = os.path.split(os.path.abspath(__file__))
         cfg_path = p+os.sep+'editor_cfg.json'
         try:
             cfg_file  = open(cfg_path, "r")
