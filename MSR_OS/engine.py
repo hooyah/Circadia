@@ -8,6 +8,7 @@
 
 import json
 import os
+import time
 
 from MSR_OS import mgraphic, msound
 from MSR_HAL import circadiahw
@@ -20,13 +21,11 @@ System = dict()
 msr_graphic_modules = list()
 msr_sound_modules = list()
 sys_hw = circadiahw.CircadiaHw
-
+__callbacks = list()
 
 # registered modules
 Modules = {'gradient': mgraphic.gradient_module, 'imgShift': mgraphic.ImgShift_module, 'wav': msound.wav_module}
 Themes = []
-
-
 
 
 
@@ -156,4 +155,44 @@ def loadConfig(cfg_path):
     except:
         print "couldn't open config file. configure circadia_cfg_template.json and rename it to circadia_cfg.json"
         raise(RuntimeError)
+
+
+
+def addCallback(callbackFn, param, delay, perpetual=False):
+
+    global __callbacks
+    if perpetual:
+        delay *= -1
+    __callbacks.append([time.time(), delay, callbackFn, param])
+
+
+def pollCallbacks():
+
+    global __callbacks
+    now = time.time()
+
+    #print 'now',now
+    #print __callbacks
+
+    remaining = []
+    for cb in __callbacks:
+        delay = abs(cb[1])
+        perpetual = True if cb[1] < 0 else False
+
+        if now-cb[0] > delay:
+            print 'running callback', cb[2]
+            cb[2](cb[3])
+            if perpetual:
+                cb[0] = now
+                remaining.append(cb)
+        else:
+            remaining.append(cb)
+
+    __callbacks = remaining
+
+
+def clearCallbacks():
+
+    global __callbacks
+    __callbacks = []
 

@@ -8,6 +8,7 @@
 
 import json
 import pygame
+import time
 
 import neopixel
 import RPi.GPIO as gpio
@@ -31,7 +32,7 @@ _strip = None
 _display = None
 _activeLUT = None
 _defaultLUTs = {'off': None, 'default': None}
-
+_warmup = -1
 _screenW = 16
 _screenH = 18
 
@@ -81,7 +82,7 @@ def init(system, config):
     if 'forceDisplayWindow' in system:  # for debugging
         pygame.display.set_mode((160, 180))
 
-    _display.set_rpm(80)
+    displayOn(True)
     _display.secondsDisplay(False)
     _display.clear()
 
@@ -90,9 +91,6 @@ def init(system, config):
 
     print 'sys lamp: init done.'
 
-
-def getScreenDimensions():
-    return ( _screenW, _screenH )
 
 
 def __init_lut(system):
@@ -119,6 +117,15 @@ def __init_lut(system):
         return lut
 
     return None
+
+
+def cfg_display():
+    """"
+    set up the display to work as needed
+    separate from init because this has to be done after the display has spooled up
+    """
+    _display.secondsDisplay(False)
+    _display.clear()
 
 
 def switchLut(lutName):
@@ -208,6 +215,7 @@ def setTime(hour, minute, second):
 
     global _display
     _display.setTime(hour, minute, second)
+    _display.secondsDisplay(False)	# backup call in case the pov clock started late and was not properly initialised
 
 
 def switchClock(onoff, alarmSymbol, scrollOverride=False):
@@ -234,6 +242,24 @@ def switchClock(onoff, alarmSymbol, scrollOverride=False):
             _display.stop_scroll()
         else:
             _display.start_scroll()
+
+
+
+def displayOn(onoff):
+    """
+    Switch display on or off
+    :param onoff (bool): on or off
+    :return: none
+    """
+
+    global _warmup
+    if onoff:
+        _display.set_rpm(126)
+        _warmup = time.time()+300  # reduce rpms after 5 minutes
+    else:
+        _display.set_rpm(0)
+        _warmup = -1
+
 
 
 def textOut(txt, center=False):
@@ -268,6 +294,11 @@ def getEvent():
     :return (tuple): (string(messageName), messageParam0, ...)
     """
 
+    global _warmup
+    if _warmup > 0 and time.time() > _warmup:
+        _warmup = -1
+        _display.set_rpm(120)
+
     _display.handleRx()
     msg = _display.getNextMessage()
     if msg:
@@ -278,6 +309,8 @@ def getEvent():
             return ('buttonHold', msg[1], (((msg[3]-1)<<7) + msg[2]))
 
     return None
+
+
 
 
 

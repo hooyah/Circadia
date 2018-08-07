@@ -12,5 +12,5 @@
   "color_background" : "#444444",
   "color_highlightBackground" : "#444444",
 
-  "emulator_cmd": "python G:/Projects/code/manilaSunrise/manila/manila_alarm.py {themeName}"
+  "emulator_cmd": "python G:/Projects/code/manilaSunrise/manila/manila_alarm.py {themeName} --PREVIEW"
 }

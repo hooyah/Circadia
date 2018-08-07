@@ -26,13 +26,13 @@ class pov:
         messages to controller:
         "Q" - ask for Status
             returns "qSMB" - status, S=speed, M=displayMode, B=button status
-        "Yx" - set motor speed 0-90 (clamped at 90 for safety)
+        "Yx" - set motor speed 0-170 (clamped at 170 for safety)
 
 
     """
-    def __init__(self, cfg):
+    def __init__(self, cfg={}):
 
-        dev = cfg['serial'] if "serial" in cfg else ""
+        dev = cfg['serial'] if "serial" in cfg else "/dev/ttyAMA0"
         if dev:
             self.com = serial.Serial(dev, 2400)
             self.com.flushInput()
@@ -131,10 +131,10 @@ class pov:
     def set_scroll_speed(self, speed):
         speed = max(-4, min(4, speed))
         self.scroll_speed = speed
-        self.sendMessage('R%c'%(10+self.scroll_speed))
+        self.start_scroll()
 
     def set_rpm(self, rpm):
-        rpm = max(10, min(90, rpm))
+        rpm = max(10, min(170, rpm))
         self.sendMessage('Y%c'%rpm)
 
     def setTime(self, hour, minute, second):

@@ -20,30 +20,41 @@ alarm_time_minute = 50
 alarm_length = 30 # length of the theme in minutes
 alarm_post = 30  # how long the alarm keeps going after it's fully ramped on in minutes
 
-dbg_alarm_override = True
+dbg_alarm_override = False
 alarm_intermediate = None
+dsp_on = False
 
 but_left = 1
 but_middle = 2
 but_right = 4
 
 
+
+
+
+
+
 # Menu ------------------------------------------------------------------------------------
 # minimal menu
 # current behaviour: any button click will bring up the menu
 # left button will enable/disable the alarm
+# middle button will change the alarm time
 # right button will run the current theme in demo mode (sped up to 2 minutes)
-# holding any button while in the main menu will start rotating the display (pov display only)
+# holding the left or right button while in the main menu will start rotating the display
+# holding the middle button will shut down the display
 # 5 seconds of inactivity will exit the menu
 
 def __handle_menu():
     """
-    poll this function to handle button clicks
+    this function handles the menu
     """
 
-    global alarm_enabled, alarm_time_hour, alarm_time_minute
+    global alarm_enabled, alarm_time_hour, alarm_time_minute, dsp_on
     menu = "top"
     MSR.sys_hw.switchClock(False, alarm_enabled) # switch to display
+
+    if not dsp_on:  # switch the display on before we continue
+        menu = "dispOn"
 
     while menu != "exit":
 
@@ -52,7 +63,7 @@ def __handle_menu():
 
             MSR.sys_hw.textOut("alrm tm prf", center=True)
 
-            lasttime = time.clock()
+            lasttime = time.time()
             while True:
 
                 event = MSR.sys_hw.getEvent()
@@ -60,50 +71,83 @@ def __handle_menu():
                     if event[0] == "end":
                         menu = "exit"
                         break
-                    elif event[0] == "buttonClick" and (event[1] & but_left):
+                    elif event[0] == "buttonClick" and (event[1] & but_left) and dsp_on:
                         menu = "alarmToggle"
                         break
-                    elif event[0] == "buttonClick" and (event[1] & but_right):
+                    elif event[0] == "buttonClick" and (event[1] & but_right) and dsp_on:
                         print "horray, alarm"
                         global dbg_alarm_override
                         dbg_alarm_override = True
                         menu = "exit"
                         break
-                    elif event[0] == "buttonHold":
+                    elif event[0] == "buttonClick" and (event[1] & but_middle) and dsp_on:
+                        menu = "setAlarmTime"
+                        break
+                    elif event[0] == "buttonHold" and (event[1] & (but_left|but_right)) and dsp_on:
+                        # holding down the left or right button will rotate the display
                         menu = "magLock"
                         break
+                    elif event[0] == "buttonHold" and (event[1] & but_middle) and dsp_on:
+                        # holding down the middle button will switch off the clock display
+                        menu = "dispOff"
+                        break
 
-                if time.clock() - lasttime > 5:
+                if time.time() - lasttime > 5:
                     menu = "exit"
                     break
 
         elif menu == "magLock":
-            # rotate the display one mag lock at a time until button is release
+            # rotate the display one mag lock at a time until button is released
 
-            MSR.sys_hw.textOut(".", center=True)
-            lasttime = time.clock()
+            MSR.sys_hw.textOut("_  _  _  |  _  _  _", center=True)
+            lasttime = time.time()
             while True:
 
                 event = MSR.sys_hw.getEvent()
                 if event:
-                    if event[0] == "buttonHold" and time.clock() - lasttime > 0.5:
+                    if event[0] == "buttonHold" and time.time() - lasttime > 0.5:
                         MSR.sys_hw.incMagLock()
-                        lasttime = time.clock()
+                        lasttime = time.time()
                         continue
                     elif event[0] == "buttonClick":
                         menu = "top"
                         break
 
-                if time.clock() - lasttime > 5: # missed end of buttonHold
+                if time.time() - lasttime > 5:  # missed end of buttonHold
                     menu = "top"
                     break
 
+
+        elif menu == "dispOff":
+
+            MSR.sys_hw.displayOn(False)
+            dsp_on = False
+
+            #wait for button release
+            time.sleep(2)
+            while MSR.sys_hw.getEvent():
+                pass
+
+            menu = "exit"
+
+        elif menu == "dispOn":
+
+            MSR.sys_hw.displayOn(True)
+            dsp_on = True
+            MSR.addCallback(__initDisplayCb, param=None, delay=30, perpetual=False)
+            time.sleep(5)
+            #print "display ramping on"
+            #wait for button release
+            while MSR.sys_hw.getEvent():
+                pass
+
+            menu = "exit"
 
 
         elif menu == "alarmToggle":
 
             MSR.sys_hw.textOut("alarm on" if alarm_enabled else "alarm off", center=True)
-            lasttime = time.clock()
+            lasttime = time.time()
             while True:
 
                 event = MSR.sys_hw.getEvent()
@@ -113,19 +157,54 @@ def __handle_menu():
                         break
                     elif event[0] == "buttonClick" and (event[1] & but_left):
                         alarm_enabled = not alarm_enabled
-                        lasttime = time.clock()
+                        lasttime = time.time()
                         MSR.sys_hw.textOut("alarm on" if alarm_enabled else "alarm off", center=True)
                     elif event[0] == "buttonClick" and not (event[1] & but_left):
                         menu = "top"
                         break
 
-                if time.clock() - lasttime > 2.5:
+                if time.time() - lasttime > 2.5:
                     if alarm_enabled:
-                        MSR.sys_hw.textOut("alm ON % 2d:%02d"%(alarm_time_hour, alarm_time_minute), center=True)
+                        MSR.sys_hw.textOut("alarm ON %2d:%02d"%(alarm_time_hour, alarm_time_minute), center=True)
                         time.sleep(2)
                     menu = "exit"
                     break
 
+        elif menu == "setAlarmTime":
+            MSR.sys_hw.textOut("alarm> %2d:%02d"%(alarm_time_hour, alarm_time_minute), center=True )
+            lasttime = time.time()
+            changed = False
+            while True:
+                event = MSR.sys_hw.getEvent()
+                offs = 0
+                if event:
+                    if event[0] == "end":
+                        menu = "exit"
+                        break
+                    elif (event[0] == "buttonClick" or event[0] == "buttonHold") and (event[1] & but_middle): #dec time
+                        offs = -5
+                    elif (event[0] == "buttonClick" or event[0] == "buttonHold") and (event[1] & but_right):  #inc time
+                        offs = 5
+
+                    if offs:
+                        tm = alarm_time_hour * 60 + alarm_time_minute
+                        tm = (tm + offs) % (24*60)
+                        alarm_time_minute = int(tm % 60)
+                        alarm_time_hour = int(tm / 60)
+                        MSR.sys_hw.textOut("alarm> %2d:%02d" % (alarm_time_hour, alarm_time_minute), center=True)
+                        lasttime = time.time()
+                        changed = True
+
+                if time.time() - lasttime > 3:
+                    if changed:
+                        # save in settings file
+                        pass
+                    if alarm_enabled:
+                        MSR.sys_hw.textOut("alarm ON %2d:%02d"%(alarm_time_hour, alarm_time_minute), center=True)
+                        time.sleep(2)
+                    menu = "exit"
+                    break
+                time.sleep(0.1)
 
 
     MSR.sys_hw.switchClock(True, alarm_enabled) # return to clock display
@@ -142,6 +221,33 @@ def __setTime():
     MSR.sys_hw.setTime(now.hour, now.minute, now.second)
 
 
+def __updateTimeCb(arg):
+    """
+    callback that updates the system time periodically
+    :param arg: Nothing
+    :return: none
+    """
+
+    print 'updateTime', datetime.datetime.now()
+    __setTime()
+    #MSR.addCallback(__updateTimeRecCb, None, 3600 * 3)
+
+
+def __initDisplayCb(arg):
+    """
+    callback that initializes the display when it comes back from sleep
+    :param arg: Nothing
+    :return: none
+    """
+
+    print 'initDisplayCb', datetime.datetime.now()
+    __setTime()
+    MSR.sys_hw.cfg_display()
+    MSR.sys_hw.switchClock(1, alarm_enabled)
+
+
+
+
 
 
 # --------------- Main --------------------------------------------------------------------------
@@ -156,8 +262,8 @@ def main(themeName=None):
     global alarm_length
     global dbg_alarm_override
     global alarm_intermediate
+    global dsp_on
     alarm_autothemes = True
-    alarm_currentTheme = None
 
     print 'running on', MSR.sys_hw.platform()
     p,n = os.path.split(os.path.abspath(__file__))
@@ -177,7 +283,9 @@ def main(themeName=None):
     MSR.sys_hw.audio_off()
     __setTime()
     MSR.sys_hw.switchClock(1, alarm_enabled)
-    __setTime()
+    MSR.addCallback(__initDisplayCb, param=None, delay=15, perpetual=False)  # update the time in 10s
+    MSR.addCallback(__updateTimeCb, param=None, delay=3600 * 3, perpetual=True)  # then every 3h
+    dsp_on = True
 
 
 
@@ -186,7 +294,6 @@ def main(themeName=None):
     state = "init"
     alarmInterval = 0
     alarmHysteresis = False
-    idle_timer = 0
     alarm_fade = 0
     try:
         while(running):
@@ -202,6 +309,7 @@ def main(themeName=None):
                 # do mostly nothing
                 time.sleep(.3)
 
+                MSR.pollCallbacks()
                 event =  MSR.sys_hw.getEvent()
                 if event:
                     if event[0] == "end":
@@ -227,11 +335,6 @@ def main(themeName=None):
                     alarm_intermediate = alarm_length
                     alarm_length = 2
 
-                idle_timer += 1
-                if idle_timer > 3600*3:
-                    print 'setTime', datetime.datetime.now()
-                    __setTime()
-                    idle_timer = 0
 
 
             elif state == "start alarm":
@@ -239,6 +342,10 @@ def main(themeName=None):
                 alarmInterval = timeInterval(time.time(), alarm_length*60)
                 MSR.reset_audioVideo()
                 MSR.sys_hw.audio_on()
+                if not dsp_on:
+                    MSR.sys_hw.displayOn(True)
+                    dsp_on = True
+                    MSR.addCallback(__initDisplayCb, None, 20)
                 state = "alarm"
 
 
@@ -247,6 +354,7 @@ def main(themeName=None):
                 elapsed = alarmInterval.elapsed(time.time())
 
                 MSR.handle_audioVideo(elapsed)
+                MSR.pollCallbacks()
                 time.sleep(0.005)
 
                 event = MSR.sys_hw.getEvent()
@@ -301,6 +409,7 @@ def main(themeName=None):
 
                 break
 
+
     except KeyboardInterrupt:
         pass
 
@@ -315,7 +424,12 @@ def main(themeName=None):
 if __name__ == "__main__":
 
     themeName = None
-    print sys.argv
+
+    if "--PREVIEW" in sys.argv:
+        dbg_alarm_override = True
+        sys.argv.remove("--PREVIEW")
+        print "entering demo mode"
+
     if len(sys.argv) > 1:
         themeName = sys.argv[1]
 
